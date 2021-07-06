@@ -7,5 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-07-06
 ### Added
 - Set up template.
+- Adding task with name, tags, difficulty.
+- Editing task with name, tags, difficulty.
+- Completion task with date of complition.
+- Display task as table in console.
+- Show today completed tasks with green color.
+- Group tasks by difficulty, tags, count of complition, date of last complition.
+- Sort tasks by id, name, difficulty, count of complition, date of last complition.
+- Save data to platform specific app data dir.
 ### Fixed
 - README.md
