@@ -1,12 +1,12 @@
-# python-app
+# optional-tasks
 
-A template python app.
+A to-do list for optional task.
 
 ## Usage
 
 ```
-$ pip install git+git://github.com/IceArrow256/python-app
-$ python-app
+$ pip install git+git://github.com/IceArrow256/optional-tasks
+$ optional-tasks
 ```
 
 ## License
