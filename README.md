@@ -1,6 +1,6 @@
 # optional-tasks
 
-A to-do list for optional task.
+A to-do list for optional tasks.
 
 ## Usage
 
