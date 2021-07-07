@@ -1,34 +1,14 @@
-import json
 import pathlib
 import datetime
 
 import appdirs
 
+import optional_tasks.files as files
+
 
 class NameAlreadyExistError(Exception):
     def __init__(self, msg):
         super().__init__(msg)
-
-
-def load_json(path: pathlib.Path, default_dict=True):
-    if path.exists() and path.is_file():
-        with open(path, encoding="utf8") as file:
-            data = json.load(file)
-        file.close()
-        return data
-    else:
-        if default_dict:
-            return {}
-        else:
-            return []
-
-
-def save_json(data, path: pathlib.Path, indent=None):
-    if not path.parent.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w', encoding="utf-8") as file:
-        file.write(json.dumps(data, ensure_ascii=False, indent=indent))
-    file.close()
 
 
 class Task:
@@ -54,7 +34,7 @@ class Tasks:
         user_data_dir = appdirs.user_data_dir(appname, appauthor)
         self.file = pathlib.Path(user_data_dir) / 'tasks.json'
         self.tasks: list = [Task.from_dict(task)
-                            for task in load_json(self.file, False)]
+                            for task in files.load_json(self.file, False)]
 
     def add(self, name: str, difficulty: int, tags: set):
         ids = [task.id for task in self.tasks if task.id != None] or [-1]
@@ -84,11 +64,12 @@ class Tasks:
     def complete(self, id):
         for task in self.tasks:
             if task.id == id:
-                task.completions.append((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
+                task.completions.append(
+                    (datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
 
     def __del__(self):
         self.tasks.sort(key=lambda x: x.id, reverse=False)
-        save_json([task.__dict__ for task in self.tasks], self.file)
+        files.save_json([task.__dict__ for task in self.tasks], self.file)
 
     def __sort(self, sort: str):
         if (sort == 'name'):
