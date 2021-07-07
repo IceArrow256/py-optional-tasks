@@ -1,24 +1,8 @@
 import sys
 import argparse
-import pathlib
-import json
 
-import appdirs
-
-import optional_tasks.optional_tasks as optional_tasks
+from optional_tasks.colors import Colors
 import optional_tasks.tasks as tasks
-
-
-class Colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 
 
 def main():
@@ -60,7 +44,8 @@ def main():
     elif args.complete != None and args.edit == None and not args.add:
         t.complete(args.complete)
     elif args.complete != None and args.add != None and args.edit != None:
-        print(F'{Colors.FAIL}Invalid argument combination{Colors.ENDC}', file=sys.stderr)
+        print(F'{Colors.FAIL}Invalid argument combination{Colors.ENDC}',
+              file=sys.stderr)
         exit()
     else:
         t.print(args.group, args.sort)
