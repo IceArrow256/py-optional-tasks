@@ -56,7 +56,7 @@ class Tasks:
         self.tasks: list = [Task.from_dict(task)
                             for task in load_json(self.file, False)]
 
-    def add(self, name: str, difficulty: int, tags: list):
+    def add(self, name: str, difficulty: int, tags: set):
         ids = [task.id for task in self.tasks if task.id != None] or [-1]
         names: list = [task.name for task in self.tasks]
         if name not in names:
@@ -64,14 +64,14 @@ class Tasks:
         else:
             raise NameAlreadyExistError('Task with this name already exists')
 
-    def edit(self, id: int, name: str, difficulty: int, tags: list):
-        target_task: Task = None
+    def edit(self, id: int, name, difficulty: int, tags: set):
+        target_task = None
         for task in self.tasks:
             if task.id == id:
                 target_task = task
                 self.tasks.remove(task)
         names: list = [task.name for task in self.tasks]
-        if name not in names:
+        if name not in names and target_task:
             self.tasks.append(Task(target_task.id,
                                    name or target_task.name,
                                    difficulty or target_task.difficulty,
