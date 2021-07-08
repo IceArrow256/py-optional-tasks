@@ -4,11 +4,7 @@ import datetime
 import appdirs
 
 import optional_tasks.files as files
-
-
-class NameAlreadyExistError(Exception):
-    def __init__(self, msg):
-        super().__init__(msg)
+import optional_tasks.exceptions as exceptions
 
 
 class Task:
@@ -42,7 +38,8 @@ class Tasks:
         if name not in names:
             self.tasks.append(Task(max(ids) + 1, name, difficulty, tags))
         else:
-            raise NameAlreadyExistError('Task with this name already exists')
+            raise exceptions.NameAlreadyExistError(
+                'Task with this name already exists')
 
     def edit(self, id: int, name, difficulty: int, tags: set):
         target_task = None
@@ -59,7 +56,8 @@ class Tasks:
                                    target_task.completions))
         else:
             self.tasks.append(target_task)
-            raise NameAlreadyExistError('Task with this name already exists')
+            raise exceptions.NameAlreadyExistError(
+                'Task with this name already exists')
 
     def complete(self, id):
         for task in self.tasks:
@@ -85,17 +83,23 @@ class Tasks:
             self.tasks.sort(key=lambda x: x.id, reverse=False)
 
     def __print_header(self):
-        id_len = max(max([len(str(task.id)) for task in self.tasks])+1, 3)
-        name_len = max(max([len(task.name) for task in self.tasks])+1, 5)
-        tags_len = max(max([len(str(task.tags)) for task in self.tasks])+1, 5)
+        if self.tasks:
+            id_len = max(max([len(str(task.id)) for task in self.tasks])+1, 3)
+            name_len = max(max([len(task.name) for task in self.tasks])+1, 5)
+            tags_len = max(max([len(str(task.tags))
+                           for task in self.tasks])+1, 5)
+        else:
+            id_len = name_len = tags_len = 16
         print(f'{"id":<{id_len}}{"name":<{name_len}}{"difficulty":<{11}}{"tags":<{tags_len}}{"completion count":<{len("completion count")+1}}{"last completion date"}')
 
     def __print_row(self, task: Task):
-        id_len = max(max([len(str(task.id)) for task in self.tasks])+1, 3)
-        name_len = max(max([len(task.name) for task in self.tasks])+1, 5)
-        tags_len = max(max([len(str(task.tags)) for task in self.tasks])+1, 5)
-        ts = max(task.completions)
-        print(f'{task.id:<{id_len}}{task.name:<{name_len}}{task.difficulty:<11}{str(task.tags):<{tags_len}}{len(task.completions):<{len("completion count")+1}}{datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")}')
+        if self.tasks:
+            id_len = max(max([len(str(task.id)) for task in self.tasks])+1, 3)
+            name_len = max(max([len(task.name) for task in self.tasks])+1, 5)
+            tags_len = max(max([len(str(task.tags))
+                           for task in self.tasks])+1, 5)
+            ts = max(task.completions or [0])
+            print(f'{task.id:<{id_len}}{task.name:<{name_len}}{task.difficulty:<11}{str(task.tags):<{tags_len}}{len(task.completions):<{len("completion count")+1}}{datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")}')
 
     def print(self, group: str, sort: str):
         self.__sort(sort)
