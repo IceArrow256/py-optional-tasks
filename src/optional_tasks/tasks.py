@@ -78,7 +78,7 @@ class Tasks:
         elif (sort == 'count'):
             self.tasks.sort(key=lambda x: len(x.completions), reverse=False)
         elif (sort == 'date'):
-            self.tasks.sort(key=lambda x: max(x.completions), reverse=False)
+            self.tasks.sort(key=lambda x: max(x.completions or [0]), reverse=False)
         else:
             # sort by id
             self.tasks.sort(key=lambda x: x.id, reverse=False)
