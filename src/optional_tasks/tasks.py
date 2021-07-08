@@ -1,9 +1,9 @@
 import pathlib
-from datetime import datetime as dt
 
 import appdirs
 
 from optional_tasks.colors import Colors
+from optional_tasks.times import *
 import optional_tasks.exceptions as exceptions
 import optional_tasks.files as files
 
@@ -64,8 +64,7 @@ class Tasks:
     def complete(self, id):
         for task in self.tasks:
             if task.id == id:
-                task.completions.append(
-                    (dt.utcnow() - dt(1970, 1, 1)).total_seconds())
+                task.completions.append(get_current_unix_time())
 
     def __del__(self):
         self.tasks.sort(key=lambda x: x.id, reverse=False)
@@ -94,16 +93,19 @@ class Tasks:
     def __count_lengths(self):
         lens = {}
         if self.tasks:
-            lens['id'] = max(max([len(str(task.id)) for task in self.tasks]), 2)
+            lens['id'] = max(max([len(str(task.id))
+                             for task in self.tasks]), 2)
             lens['name'] = max(max([len(task.name) for task in self.tasks]), 4)
-            lens['tags'] = max(max([len(self.__tags_to_str(task.tags)) for task in self.tasks]), 4)
-            lens['completion count'] = max(max([len(str(len(task.completions))) for task in self.tasks]), 16)
+            lens['tags'] = max(
+                max([len(self.__tags_to_str(task.tags)) for task in self.tasks]), 4)
+            lens['completion count'] = max(
+                max([len(str(len(task.completions))) for task in self.tasks]), 16)
         else:
-            lens['id'] = 2 # 'id'
-            lens['name'] = 4 # 'name'
-            lens['tags'] = 4 # 'tags'
-            lens['completion count'] = 16 # 'completion count'
-        lens['difficulty'] = 10 # 'difficulty'
+            lens['id'] = 2  # 'id'
+            lens['name'] = 4  # 'name'
+            lens['tags'] = 4  # 'tags'
+            lens['completion count'] = 16  # 'completion count'
+        lens['difficulty'] = 10  # 'difficulty'
         lens['last completion date'] = 20
         return lens
 
@@ -119,12 +121,16 @@ class Tasks:
 
     def __print_row(self, task: Task):
         last_completion_date = max(task.completions or [0])
-        print((f'| {task.id:<{self.lens["id"]}} |'
-               f' {task.name:<{self.lens["name"]}} |'
-               f' {task.difficulty:<{self.lens["difficulty"]}} |'
-               f' {self.__tags_to_str(task.tags):<{self.lens["tags"]}} |'
-               f' {len(task.completions):<{self.lens["completion count"]}} |'
-               f' {dt.fromtimestamp(last_completion_date).strftime("%Y-%m-%d %H:%M:%S"):<{self.lens["last completion date"]}} |'))
+        output = (f'| {task.id:<{self.lens["id"]}} |'
+                  f' {task.name:<{self.lens["name"]}} |'
+                  f' {task.difficulty:<{self.lens["difficulty"]}} |'
+                  f' {self.__tags_to_str(task.tags):<{self.lens["tags"]}} |'
+                  f' {len(task.completions):<{self.lens["completion count"]}} |')
+        if last_completion_date > get_unix_day_start_time():
+            output += f' {Colors.OKGREEN}{unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}}{Colors.ENDC} |'
+        else:
+            output += f' {unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}} |'
+        print(output)
 
     def print(self, group: str, sort: str):
         self.__sort(sort)

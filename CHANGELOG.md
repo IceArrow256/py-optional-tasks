@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2021-07-08
 ### Added
 - Improve printing of header and rows.
+- Class for working with time.
+- Show today completed tasks with green color #1.
 ### Changed
 - Move custom exception to exceptions.py.
 ### Fix
