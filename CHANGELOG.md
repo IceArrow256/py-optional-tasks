@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2021-07-09
+### Added
+- Showing total score for task in table #2.
+- Today score #5.
+- Yesterday score.
+- Average score.
+- Sorting by score
+### Changed
+- Sorting tags by score, if grouping is by tags #4.
+
 ## [0.3.1] - 2021-07-08
 ### Fixed
 - Sorting by date if some task don't have complition.

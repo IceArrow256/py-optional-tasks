@@ -77,8 +77,11 @@ class Tasks:
             self.tasks.sort(key=lambda x: x.difficulty, reverse=False)
         elif (sort == 'count'):
             self.tasks.sort(key=lambda x: len(x.completions), reverse=False)
+        elif (sort == 'score'):
+            self.tasks.sort(key=lambda x: len(x.completions) * x.difficulty, reverse=False)
         elif (sort == 'date'):
-            self.tasks.sort(key=lambda x: max(x.completions or [0]), reverse=False)
+            self.tasks.sort(key=lambda x: max(
+                x.completions or [0]), reverse=False)
         else:
             # sort by id
             self.tasks.sort(key=lambda x: x.id, reverse=False)
@@ -98,13 +101,16 @@ class Tasks:
             lens['name'] = max(max([len(task.name) for task in self.tasks]), 4)
             lens['tags'] = max(
                 max([len(self.__tags_to_str(task.tags)) for task in self.tasks]), 4)
-            lens['completion count'] = max(
-                max([len(str(len(task.completions))) for task in self.tasks]), 16)
+            lens['count'] = max(
+                max([len(str(len(task.completions))) for task in self.tasks]), 5)
+            lens['score'] = max(
+                max([len(str(len(task.completions)*task.difficulty)) for task in self.tasks]), 5)
         else:
             lens['id'] = 2  # 'id'
             lens['name'] = 4  # 'name'
             lens['tags'] = 4  # 'tags'
-            lens['completion count'] = 16  # 'completion count'
+            lens['count'] = 5  # 'count'
+            lens['score'] = 5  # 'score'
         lens['difficulty'] = 10  # 'difficulty'
         lens['last completion date'] = 20
         return lens
@@ -114,10 +120,11 @@ class Tasks:
                   f' {Colors.HEADER}{"name":<{self.lens["name"]}}{Colors.ENDC} |'
                   f' {Colors.HEADER}{"difficulty":<{self.lens["difficulty"]}}{Colors.ENDC} |'
                   f' {Colors.HEADER}{"tags":<{self.lens["tags"]}}{Colors.ENDC} |'
-                  f' {Colors.HEADER}{"completion count":<{self.lens["completion count"]}}{Colors.ENDC} |'
+                  f' {Colors.HEADER}{"count":<{self.lens["count"]}}{Colors.ENDC} |'
+                  f' {Colors.HEADER}{"score":<{self.lens["score"]}}{Colors.ENDC} |'
                   f' {Colors.HEADER}{"last completion date":<{self.lens["last completion date"]}}{Colors.ENDC} |')
         print(output)
-        print('-'*(len(output) - 9*6))
+        print('-'*(len(output) - 9*7))
 
     def __print_row(self, task: Task):
         last_completion_date = max(task.completions or [0])
@@ -125,12 +132,34 @@ class Tasks:
                   f' {task.name:<{self.lens["name"]}} |'
                   f' {task.difficulty:<{self.lens["difficulty"]}} |'
                   f' {self.__tags_to_str(task.tags):<{self.lens["tags"]}} |'
-                  f' {len(task.completions):<{self.lens["completion count"]}} |')
+                  f' {len(task.completions):<{self.lens["count"]}} |'
+                  f' {len(task.completions)*task.difficulty:<{self.lens["score"]}} |')
         if last_completion_date > get_unix_day_start_time():
             output += f' {Colors.OKGREEN}{unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}}{Colors.ENDC} |'
         else:
             output += f' {unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}} |'
         print(output)
+
+    def __count_total_score(self):
+        today_score = 0
+        date_score = {}
+        for task in self.tasks:
+            for completion in task.completions:
+                unix_day_start = get_unix_day_start_time(completion)
+                unix_day_end = unix_day_start+SECOND_IN_DAY
+                if unix_day_start <= completion < unix_day_end:
+                    if unix_day_start not in date_score:
+                        date_score[unix_day_start] = 0
+                    date_score[unix_day_start] += task.difficulty
+        dates = set(date_score.keys())
+        average_score = sum(date_score.values())/len(date_score.values())
+        today_score = date_score[max(dates)]
+        dates.remove(max(dates))
+        yesterday_score = date_score[max(dates)]
+        print(f'average score: {average_score}')
+        print(f'yesterday score: {yesterday_score}')
+        print(f'today score: {today_score}')
+
 
     def print(self, group: str, sort: str):
         self.__sort(sort)
@@ -146,16 +175,17 @@ class Tasks:
                     self.__print_row(task)
                 print()
         elif (group == 'tags'):
-            tags = set()
+            tags = {}
             for task in self.tasks:
                 for tag in task.tags:
-                    tags.add(tag)
-            tags = sorted(tags)
+                    if tag not in tags:
+                        tags[tag] = 0
             for tag in tags:
-                score = 0
                 for task in [task for task in self.tasks if tag in task.tags]:
-                    score += len(task.completions) * task.difficulty
-                print(f' {tag} {score}')
+                    tags[tag] += len(task.completions) * task.difficulty
+            tags = dict(sorted(tags.items(), key=lambda item: item[1], reverse=True))
+            for tag in tags:
+                print(f' {tag} {tags[tag]}')
                 for task in [task for task in self.tasks if tag in task.tags]:
                     self.__print_row(task)
                 print()
@@ -165,10 +195,12 @@ class Tasks:
                 counts.add(len(task.completions))
             counts = sorted(counts)
             for count in counts:
-                print(f'completion count: {count}')
+                print(f'count: {count}')
                 for task in [task for task in self.tasks if len(task.completions) == count]:
                     self.__print_row(task)
                 print()
         else:
             for task in self.tasks:
                 self.__print_row(task)
+        print()
+        self.__count_total_score()

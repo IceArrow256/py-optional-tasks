@@ -2,7 +2,8 @@ import sys
 import argparse
 
 from optional_tasks.colors import Colors
-import optional_tasks.tasks as tasks
+from optional_tasks.tasks import Tasks
+from optional_tasks.exceptions import NameAlreadyExistError
 
 
 def main():
@@ -17,18 +18,18 @@ def main():
     parser.add_argument(
         '-g', '--group', default='none', choices=['none', 'difficulty', 'tags', 'count', 'date'], help='set group by')
     parser.add_argument('-s', '--sort', default='id', choices=[
-                        'id', 'name', 'difficulty', 'count', 'date'], help='set sort by')
+                        'id', 'name', 'difficulty', 'count', 'date', 'score'], help='set sort by')
     parser.add_argument('-c', '--complete', type=int,
                         help='complete task with id')
     args = parser.parse_args()
 
-    t = tasks.Tasks()
+    t = Tasks()
     if args.add and args.edit == None and args.complete == None:
         if args.name:
             name = ' '.join(args.name)
             try:
                 t.add(name, args.difficulty, args.tags)
-            except tasks.NameAlreadyExistError as e:
+            except NameAlreadyExistError as e:
                 print(F'{Colors.FAIL}{e}{Colors.ENDC}', file=sys.stderr)
                 exit()
     elif args.edit and not args.add and args.complete == None:
@@ -38,7 +39,7 @@ def main():
             name = None
         try:
             t.edit(args.edit, name, args.difficulty, args.tags)
-        except tasks.NameAlreadyExistError as e:
+        except NameAlreadyExistError as e:
             print(F'{Colors.FAIL}{e}{Colors.ENDC}', file=sys.stderr)
             exit()
     elif args.complete != None and args.edit == None and not args.add:
