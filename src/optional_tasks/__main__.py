@@ -21,9 +21,10 @@ def main():
                         'id', 'name', 'difficulty', 'count', 'date', 'score'], help='set sort by')
     parser.add_argument('-c', '--complete', type=int,
                         help='complete task with id')
+    parser.add_argument('--short', action='store_true', help='short headers')
     args = parser.parse_args()
 
-    t = Tasks()
+    t = Tasks(args.short)
     if args.add and args.edit == None and args.complete == None:
         if args.name:
             name = ' '.join(args.name)

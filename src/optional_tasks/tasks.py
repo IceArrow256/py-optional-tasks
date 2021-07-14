@@ -5,41 +5,46 @@ import appdirs
 
 from optional_tasks.colors import Colors
 from optional_tasks.times import *
+from optional_tasks.task import Task
 import optional_tasks.exceptions as exceptions
 import optional_tasks.files as files
 
 
-class Task:
-    def __init__(self, id: int, name: str, difficulty: int, tags: set, completions: list = []) -> None:
-        self.id = id
-        self.name = name
-        self.difficulty = difficulty
-        self.tags = tags
-        self.completions = completions
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls(data['id'], data['name'], data['difficulty'], data['tags'], data['completions'])
-
-    def __str__(self):
-        return self.__dict__.__str__()
-
-
 class Tasks:
-    def __init__(self):
+    def __init__(self, is_short_header):
         appname = "optional_tasks"
         appauthor = "IceArrow256"
         user_data_dir = appdirs.user_data_dir(appname, appauthor)
         self.file = pathlib.Path(user_data_dir) / 'tasks.json'
         self.tasks: list = [Task.from_dict(task)
                             for task in files.load_json(self.file, False)]
+        if is_short_header:
+            self.headers = {
+                'id': 'id',
+                'name': 'name',
+                'difficulty': 'd',
+                'tags': 'tags',
+                'count': 'c',
+                'score': 's',
+                'last completion date': 'last completion_date'
+            }
+        else:
+            self.headers = {
+                'id': 'id',
+                'name': 'name',
+                'difficulty': 'difficulty',
+                'tags': 'tags',
+                'count': 'count',
+                'score': 'score',
+                'last completion date': 'last completion_date'
+            }
         self.lens = self.__count_lengths()
 
     def add(self, name: str, difficulty: int, tags: set):
         ids = [task.id for task in self.tasks if task.id != None] or [-1]
         names: list = [task.name for task in self.tasks]
         if name not in names:
-            self.tasks.append(Task(max(ids) + 1, name, difficulty, tags))
+            self.tasks.append(Task(max(ids) + 1, name, difficulty or 1, tags))
         else:
             raise exceptions.NameAlreadyExistError(
                 'Task with this name already exists')
@@ -69,6 +74,8 @@ class Tasks:
 
     def __del__(self):
         self.tasks.sort(key=lambda x: x.id, reverse=False)
+        for task in self.tasks:
+            task.tags = sorted(task.tags)
         files.save_json([task.__dict__ for task in self.tasks], self.file)
 
     def __sort(self, sort: str):
@@ -88,58 +95,55 @@ class Tasks:
             # sort by id
             self.tasks.sort(key=lambda x: x.id, reverse=False)
 
-    def __tags_to_str(self, tags: set):
-        result = str(tags)
-        result = result.replace('[', '')
-        result = result.replace(']', '')
-        result = result.replace("'", '')
-        return result
-
     def __count_lengths(self):
         lens = {}
         if self.tasks:
             lens['id'] = max(max([len(str(task.id))
-                             for task in self.tasks]), 2)
-            lens['name'] = max(max([len(task.name) for task in self.tasks]), 4)
-            lens['tags'] = max(
-                max([len(self.__tags_to_str(task.tags)) for task in self.tasks]), 4)
+                             for task in self.tasks]), len(self.headers['id']))
+            lens['name'] = max(max([len(task.name)
+                               for task in self.tasks]), len(self.headers['name']))
+            lens['tags'] = max(max([len(task.get_tags())
+                               for task in self.tasks]), len(self.headers['tags']))
             lens['count'] = max(
-                max([len(str(len(task.completions))) for task in self.tasks]), 5)
+                max([len(str(len(task.completions))) for task in self.tasks]), len(self.headers['count']))
             lens['score'] = max(
-                max([len(str(len(task.completions)*task.difficulty)) for task in self.tasks]), 5)
+                max([len(str(len(task.completions)*task.difficulty)) for task in self.tasks]), len(self.headers['score']))
         else:
             lens['id'] = 2  # 'id'
-            lens['name'] = 4  # 'name'
-            lens['tags'] = 4  # 'tags'
-            lens['count'] = 5  # 'count'
-            lens['score'] = 5  # 'score'
-        lens['difficulty'] = 10  # 'difficulty'
-        lens['last completion date'] = 20
+            lens['name'] = len(self.headers['name'])  # 'name'
+            lens['tags'] = len(self.headers['tags'])  # 'tags'
+            lens['count'] = len(self.headers['count'])  # 'count'
+            lens['score'] = len(self.headers['score'])  # 'score'
+        lens['difficulty'] = max(
+            len(self.headers['difficulty']), 2)   # 'difficulty'
+        lens['last completion date'] = max(
+            len(self.headers['last completion date']), 19)
         return lens
 
     def __print_header(self):
-        output = (f'| {Colors.HEADER}{"id":<{self.lens["id"]}}{Colors.ENDC} |'
-                  f' {Colors.HEADER}{"name":<{self.lens["name"]}}{Colors.ENDC} |'
-                  f' {Colors.HEADER}{"difficulty":<{self.lens["difficulty"]}}{Colors.ENDC} |'
-                  f' {Colors.HEADER}{"tags":<{self.lens["tags"]}}{Colors.ENDC} |'
-                  f' {Colors.HEADER}{"count":<{self.lens["count"]}}{Colors.ENDC} |'
-                  f' {Colors.HEADER}{"score":<{self.lens["score"]}}{Colors.ENDC} |'
-                  f' {Colors.HEADER}{"last completion date":<{self.lens["last completion date"]}}{Colors.ENDC} |')
+        output = (f'{Colors.UNDERLINE}{self.headers["id"]:<{self.lens["id"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["name"]:<{self.lens["name"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["difficulty"]:<{self.lens["difficulty"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["tags"]:<{self.lens["tags"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["count"]:<{self.lens["count"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["score"]:<{self.lens["score"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["last completion date"]:<{self.lens["last completion date"]}}{Colors.ENDC}')
         print(output)
-        print('-'*(len(output) - 9*7))
 
     def __print_row(self, task: Task):
         last_completion_date = max(task.completions or [0])
-        output = (f'| {task.id:<{self.lens["id"]}} |'
-                  f' {task.name:<{self.lens["name"]}} |'
-                  f' {task.difficulty:<{self.lens["difficulty"]}} |'
-                  f' {self.__tags_to_str(task.tags):<{self.lens["tags"]}} |'
-                  f' {len(task.completions):<{self.lens["count"]}} |'
-                  f' {len(task.completions)*task.difficulty:<{self.lens["score"]}} |')
-        if last_completion_date > get_unix_day_start_time():
-            output += f' {Colors.OKGREEN}{unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}}{Colors.ENDC} |'
+        output = (f'{task.id:<{self.lens["id"]}} '
+                  f'{task.name:<{self.lens["name"]}} '
+                  f'{task.difficulty:<{self.lens["difficulty"]}} '
+                  f'{task.get_tags():<{self.lens["tags"]}} '
+                  f'{len(task.completions):<{self.lens["count"]}} '
+                  f'{len(task.completions)*task.difficulty:<{self.lens["score"]}} ')
+        if last_completion_date == 0:
+            output += f'{Colors.FAIL}{"never":<{self.lens["last completion date"]}}{Colors.ENDC}'
+        elif last_completion_date > get_unix_day_start_time():
+            output += f'{Colors.OKGREEN}{unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}}{Colors.ENDC}'
         else:
-            output += f' {unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}} |'
+            output += f'{unix_time_to_iso(last_completion_date):<{self.lens["last completion date"]}}'
         print(output)
 
     def __count_total_score(self):
@@ -153,7 +157,10 @@ class Tasks:
                     if unix_day_start not in date_score:
                         date_score[unix_day_start] = 0
                     date_score[unix_day_start] += task.difficulty
-        average_score = sum(date_score.values())/len(date_score.values())
+        try:
+            average_score = sum(date_score.values())/len(date_score.values())
+        except ZeroDivisionError as e:
+            average_score = 0
         today_score = date_score[get_unix_day_start_time(
         )] if get_unix_day_start_time() in date_score else 0
         unix_yesterday_start = get_unix_day_start_time()-SECOND_IN_DAY
@@ -187,7 +194,7 @@ class Tasks:
             tags = dict(
                 sorted(tags.items(), key=lambda item: item[1], reverse=True))
             for tag in tags:
-                print(f' {tag} {tags[tag]}')
+                print(f'{tag} {tags[tag]}')
                 for task in [task for task in self.tasks if tag in task.tags]:
                     self.__print_row(task)
                 print()
