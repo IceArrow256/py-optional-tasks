@@ -1,3 +1,4 @@
+from datetime import date
 import pathlib
 
 import appdirs
@@ -78,7 +79,8 @@ class Tasks:
         elif (sort == 'count'):
             self.tasks.sort(key=lambda x: len(x.completions), reverse=False)
         elif (sort == 'score'):
-            self.tasks.sort(key=lambda x: len(x.completions) * x.difficulty, reverse=False)
+            self.tasks.sort(key=lambda x: len(x.completions)
+                            * x.difficulty, reverse=False)
         elif (sort == 'date'):
             self.tasks.sort(key=lambda x: max(
                 x.completions or [0]), reverse=False)
@@ -151,15 +153,14 @@ class Tasks:
                     if unix_day_start not in date_score:
                         date_score[unix_day_start] = 0
                     date_score[unix_day_start] += task.difficulty
-        dates = set(date_score.keys())
         average_score = sum(date_score.values())/len(date_score.values())
-        today_score = date_score[max(dates)]
-        dates.remove(max(dates))
-        yesterday_score = date_score[max(dates)]
+        today_score = date_score[get_unix_day_start_time(
+        )] if get_unix_day_start_time() in date_score else 0
+        unix_yesterday_start = get_unix_day_start_time()-SECOND_IN_DAY
+        yesterday_score = date_score[unix_yesterday_start] if unix_yesterday_start in date_score else 0
         print(f'average score: {average_score}')
         print(f'yesterday score: {yesterday_score}')
         print(f'today score: {today_score}')
-
 
     def print(self, group: str, sort: str):
         self.__sort(sort)
@@ -183,7 +184,8 @@ class Tasks:
             for tag in tags:
                 for task in [task for task in self.tasks if tag in task.tags]:
                     tags[tag] += len(task.completions) * task.difficulty
-            tags = dict(sorted(tags.items(), key=lambda item: item[1], reverse=True))
+            tags = dict(
+                sorted(tags.items(), key=lambda item: item[1], reverse=True))
             for tag in tags:
                 print(f' {tag} {tags[tag]}')
                 for task in [task for task in self.tasks if tag in task.tags]:
