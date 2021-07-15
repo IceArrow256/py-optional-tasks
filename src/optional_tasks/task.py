@@ -1,3 +1,6 @@
+from optional_tasks.times import get_unix_day_start_time
+
+
 class Task:
     def __init__(self, id: int, name: str, difficulty: int, tags: set, completions: list = []) -> None:
         self.id = id
@@ -20,3 +23,6 @@ class Task:
         result = result.replace(',', '')
         result = result.replace("'", '')
         return result
+
+    def get_today_completions(self):
+        return [completion for completion in self.completions if completion >= get_unix_day_start_time()]

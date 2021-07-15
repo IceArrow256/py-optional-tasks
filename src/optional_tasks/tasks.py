@@ -1,4 +1,5 @@
 from datetime import date
+from os import name
 import pathlib
 
 import appdirs
@@ -26,6 +27,8 @@ class Tasks:
                 'tags': 'tags',
                 'count': 'c',
                 'score': 's',
+                'today count': 'tc',
+                'today score': 'ts',
                 'last completion date': 'last completion_date'
             }
         else:
@@ -36,6 +39,8 @@ class Tasks:
                 'tags': 'tags',
                 'count': 'count',
                 'score': 'score',
+                'today count': 'today count',
+                'today score': 'today score',
                 'last completion date': 'last completion_date'
             }
         self.lens = self.__count_lengths()
@@ -88,6 +93,12 @@ class Tasks:
         elif (sort == 'score'):
             self.tasks.sort(key=lambda x: len(x.completions)
                             * x.difficulty, reverse=False)
+        elif (sort == 'tcount'):
+            self.tasks.sort(key=lambda x: len(
+                x.get_today_completions()), reverse=False)
+        elif (sort == 'tscore'):
+            self.tasks.sort(key=lambda x: len(x.get_today_completions())
+                            * x.difficulty, reverse=False)
         elif (sort == 'date'):
             self.tasks.sort(key=lambda x: max(
                 x.completions or [0]), reverse=False)
@@ -108,12 +119,18 @@ class Tasks:
                 max([len(str(len(task.completions))) for task in self.tasks]), len(self.headers['count']))
             lens['score'] = max(
                 max([len(str(len(task.completions)*task.difficulty)) for task in self.tasks]), len(self.headers['score']))
+            lens['today count'] = max(
+                max([len(str(len(task.get_today_completions()))) for task in self.tasks if task]), len(self.headers['today count']))
+            lens['today score'] = max(
+                max([len(str(len(task.get_today_completions())*task.difficulty)) for task in self.tasks]), len(self.headers['today score']))
         else:
             lens['id'] = 2  # 'id'
             lens['name'] = len(self.headers['name'])  # 'name'
             lens['tags'] = len(self.headers['tags'])  # 'tags'
             lens['count'] = len(self.headers['count'])  # 'count'
             lens['score'] = len(self.headers['score'])  # 'score'
+            lens['today count'] = len(self.headers['today count'])  # 'count'
+            lens['today score'] = len(self.headers['today score'])  # 'score'
         lens['difficulty'] = max(
             len(self.headers['difficulty']), 2)   # 'difficulty'
         lens['last completion date'] = max(
@@ -127,6 +144,8 @@ class Tasks:
                   f'{Colors.UNDERLINE}{self.headers["tags"]:<{self.lens["tags"]}}{Colors.ENDC} '
                   f'{Colors.UNDERLINE}{self.headers["count"]:<{self.lens["count"]}}{Colors.ENDC} '
                   f'{Colors.UNDERLINE}{self.headers["score"]:<{self.lens["score"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["today count"]:<{self.lens["today count"]}}{Colors.ENDC} '
+                  f'{Colors.UNDERLINE}{self.headers["today score"]:<{self.lens["today score"]}}{Colors.ENDC} '
                   f'{Colors.UNDERLINE}{self.headers["last completion date"]:<{self.lens["last completion date"]}}{Colors.ENDC}')
         print(output)
 
@@ -137,7 +156,9 @@ class Tasks:
                   f'{task.difficulty:<{self.lens["difficulty"]}} '
                   f'{task.get_tags():<{self.lens["tags"]}} '
                   f'{len(task.completions):<{self.lens["count"]}} '
-                  f'{len(task.completions)*task.difficulty:<{self.lens["score"]}} ')
+                  f'{len(task.completions)*task.difficulty:<{self.lens["score"]}} '
+                  f'{len(task.get_today_completions()):<{self.lens["today count"]}} '
+                  f'{len(task.get_today_completions())*task.difficulty:<{self.lens["today score"]}} ')
         if last_completion_date == 0:
             output += f'{Colors.FAIL}{"never":<{self.lens["last completion date"]}}{Colors.ENDC}'
         elif last_completion_date > get_unix_day_start_time():

@@ -18,7 +18,7 @@ def main():
     parser.add_argument(
         '-g', '--group', default='none', choices=['none', 'difficulty', 'tags', 'count', 'date'], help='set group by')
     parser.add_argument('-s', '--sort', default='id', choices=[
-                        'id', 'name', 'difficulty', 'count', 'date', 'score'], help='set sort by')
+                        'id', 'name', 'difficulty', 'count', 'date', 'score', 'tcount', 'tscore'], help='set sort by')
     parser.add_argument('-c', '--complete', type=int,
                         help='complete task with id')
     parser.add_argument('--short', action='store_true', help='short headers')
